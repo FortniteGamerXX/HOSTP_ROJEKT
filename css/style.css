@@ -1,1 +1,36 @@
-/* Här skrivs all din CSS */
+#sub-wrapper{
+color: rgb(0, 255, 255);
+background-color: brown;
+display: grid;
+grid-area: swr;
+grid-template-rows: 50% 50%;
+grid-template-columns: 50% 50%;
+padding: 10px;
+border: 10px solid tan;
+}
+
+#art_1{
+    background-color: blue;
+}
+#wrapper{
+    display: grid;
+   grid-template-areas: 
+   'hd intnav'
+   'swr swr'
+   'ft ft';
+/* gap: 10px; */
+height: 100vh;
+border: solid 10px;
+}
+#idx_head{
+    background-color: aqua;
+    grid-area: hd;
+}
+#inter_nav{
+    background-color: rgb(172, 165, 165);
+    grid-area: intnav;
+}
+#idx_feet{
+    grid-area: ft;
+    background-color: blanchedalmond;
+}
