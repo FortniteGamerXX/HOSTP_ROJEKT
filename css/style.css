@@ -1,6 +1,17 @@
+@font-face {
+    font-family: candy;
+    src: url("../misc/Candy\ Ai.ttf");
+}
+:root{
+    --main-color-:rgba(244, 80, 151, 1);
+    --second-color-:#FF7A54;
+}
+body{
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
 #sub-wrapper{
 color: rgb(0, 255, 255);
-background-color: brown;
+background-color: none;
 display: grid;
 grid-area: swr;
 grid-template-rows: 50% 50%;
@@ -10,7 +21,7 @@ border: 10px solid tan;
 }
 
 #art_1{
-    background-color: blue;
+    background-color: var(--second-color-);
 }
 #wrapper{
     display: grid;
@@ -18,18 +29,24 @@ border: 10px solid tan;
    'hd intnav'
    'swr swr'
    'ft ft';
-   grid-template-rows: 10% 60% 20%;
-   grid-template-columns: 30% 70%;
+   grid-template-rows: 10% 60% auto;
+   grid-template-columns: 30% auto;
+height: 100vh;
+width: 100vw;
 gap: 10px;
-height: 90vh;
-width: 90vw;
-
-border: solid 10px ;
+place-content:top;
+place-self: center;
 }
 #idx_head{
-    background-color: aqua;
+    background-color: var(--second-color-);
     grid-area: hd;
+    font-size: 3rem;
     text-align: center;
+    font-family: candy;
+    border: 10px solid --se-;  
+}
+#idx_head.h1{
+    font-family: candy;
 }
 #inter_nav{
     background-color: rgb(172, 165, 165);
