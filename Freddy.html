@@ -316,6 +316,7 @@
   </div>
   <div class="ov" id="dead">
     <h1>DU BLEV FÅNGAD</h1>
+    <a href="index.html" id="BOLLAR_AV_STÅÅL">Tillbaka till start</a>
     <p id="deadmsg">De hittade dig.</p>
     <button class="btn" id="retry">FÖRSÖK IGEN</button>
   </div>
@@ -617,7 +618,7 @@ void main(){
 
     /* ---------- spelstate ---------- */
     const NIGHT = 270, HOUR = NIGHT / 6, FINAL = 5;
-    let mode = 'menu', t = 0, gt = 0, power = 100, camUp = false, camIdx = 0, glitch = 0, blackout = false, bt = 0, dyingT = 0, killer = null;
+    let mode = 'menu', t = 0, gt = 0, power = 200, camUp = false, camIdx = 0, glitch = 0, blackout = false, bt = 0, dyingT = 0, killer = null;
     let yaw = 0, pitch = 0, mx = .5, my = .5;
     const doors = [{ closed: false, pos: 0 }, { closed: false, pos: 0 }]; // 0 = vänster, 1 = höger
     const rnd = (a, b) => a + Math.random() * (b - a);
