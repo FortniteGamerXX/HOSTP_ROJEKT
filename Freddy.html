@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Krambjörnen – Natt 1</title>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: "Courier New", monospace;
+      color: #d6e4d6;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none
+    }
+
+    #gl {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block
+    }
+
+    #gl.cam {
+      filter: grayscale(1) sepia(.6) hue-rotate(70deg) contrast(1.25) brightness(1.15)
+    }
+
+    #noise {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      image-rendering: pixelated;
+      opacity: .10;
+      mix-blend-mode: screen
+    }
+
+    #vig {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, .88) 100%)
+    }
+
+    #scan {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .28) 0 1px, transparent 1px 3px)
+    }
+
+    #flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: #a00;
+      opacity: 0
+    }
+
+    .hud {
+      position: fixed;
+      pointer-events: none;
+      text-shadow: 0 0 6px #000, 0 0 2px #000
+    }
+
+    #clock {
+      top: 14px;
+      right: 18px;
+      font-size: clamp(20px, 3.4vw, 38px);
+      text-align: right;
+      letter-spacing: 2px
+    }
+
+    #clock small {
+      display: block;
+      font-size: .45em;
+      opacity: .7
+    }
+
+    #power {
+      bottom: 84px;
+      left: 18px;
+      font-size: clamp(14px, 2vw, 22px)
+    }
+
+    #usage {
+      display: inline-block;
+      letter-spacing: 3px;
+      color: #7f7
+    }
+
+    #camhdr {
+      top: 14px;
+      left: 18px;
+      font-size: clamp(16px, 2.4vw, 28px);
+      display: none
+    }
+
+    #camhdr i {
+      display: inline-block;
+      width: .7em;
+      height: .7em;
+      border-radius: 50%;
+      background: #e22;
+      margin-right: .4em;
+      animation: bl 1s steps(2) infinite
+    }
+
+    @keyframes bl {
+      50% {
+        opacity: 0
+      }
+    }
+
+    #bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 14px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 0 12px;
+      flex-wrap: wrap
+    }
+
+    .btn {
+      font: inherit;
+      color: #d6e4d6;
+      background: rgba(10, 14, 12, .78);
+      border: 2px solid #4a5a4a;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: clamp(11px, 1.6vw, 16px);
+      letter-spacing: 1px
+    }
+
+    .btn:hover {
+      border-color: #9c9
+    }
+
+    .btn.on {
+      background: #5a1010;
+      border-color: #e44;
+      color: #fff
+    }
+
+    #camsel {
+      position: fixed;
+      right: 14px;
+      bottom: 90px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(0, 0, 0, .65);
+      border: 2px solid #4a6a4a;
+      padding: 6px 8px 4px
+    }
+
+    #camsel b {
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: #8fa88f;
+      margin-bottom: 2px
+    }
+
+    #camsel svg {
+      width: min(210px, 38vw);
+      height: auto;
+      display: block
+    }
+
+    #camsel g {
+      cursor: pointer
+    }
+
+    #wind {
+      position: fixed;
+      left: 18px;
+      top: 64px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      width: min(250px, 46vw);
+      background: rgba(0, 0, 0, .7);
+      border: 2px solid #4a6a4a;
+      padding: 8px;
+      font-size: 13px
+    }
+
+    #wtrack {
+      height: 14px;
+      border: 1px solid #8fa88f
+    }
+
+    #wbar {
+      height: 100%;
+      width: 100%;
+      background: #7f7
+    }
+
+    #wwarn {
+      display: none;
+      color: #f55;
+      animation: bl .6s steps(2) infinite
+    }
+
+    #wind .btn {
+      padding: 12px 8px;
+      touch-action: none
+    }
+
+    .ov {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: rgba(0, 0, 0, .86);
+      padding: 20px
+    }
+
+    .ov h1 {
+      font-size: clamp(28px, 6vw, 64px);
+      margin: 0 0 10px;
+      letter-spacing: 4px;
+      color: #e8d8a8;
+      text-shadow: 0 0 18px #a60
+    }
+
+    .ov p {
+      max-width: 640px;
+      line-height: 1.55;
+      font-size: clamp(13px, 1.9vw, 18px);
+      margin: 6px 0
+    }
+
+    .ov .btn {
+      margin-top: 18px;
+      font-size: clamp(16px, 2.4vw, 24px);
+      padding: 14px 28px
+    }
+
+    #menu {
+      display: flex
+    }
+
+    #dead h1 {
+      color: #d22;
+      text-shadow: 0 0 18px #800
+    }
+
+    #won h1 {
+      color: #9f9;
+      text-shadow: 0 0 18px #080
+    }
+
+    kbd {
+      border: 1px solid #777;
+      padding: 0 6px;
+      border-radius: 3px
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="gl"></canvas>
+  <canvas id="noise" width="128" height="72"></canvas>
+  <div id="vig"></div>
+  <div id="scan"></div>
+  <div id="flash"></div>
+
+  <div class="hud" id="clock"><span id="hour">12 AM</span><small>Natt 1</small>  
+</div>
+  <div class="hud" id="power">Ström: <b id="pw">100</b>%<br>Förbrukning: <span id="usage">▮</span></div>
+  <div class="hud" id="camhdr"><i></i><span id="camname">CAM 1</span></div>
+
+  <div id="camsel"></div>
+  <div id="wind">
+    <div id="wwarn">⚠ DOCKAN ÄR UTE – VEV!</div>
+    <div>SPELDOSA (LAGER)</div>
+    <div id="wtrack">
+      <div id="wbar"></div>
+    </div><button class="btn" id="bW">HÅLL NERE: VEVA [V]</button>
+  </div>
+  <div id="bar">
+    <button class="btn" id="bL">◀ VÄNSTER DÖRR [A]</button>
+    <button class="btn" id="bC">KAMERA [MELLANSLAG]</button>
+    <button class="btn" id="bR">HÖGER DÖRR [D] ▶</button>
+  </div>
+
+  <div class="ov" id="menu">
+    <h1>A.I fazbear</h1>
+    <a href="index.html" id="BOLLAR_AV_STÅÅL">Tillbaka till start</a>
+    <p><b>Natt 1</b> – Du är nattvakt på en nedlagd barnrestaurang. Mellan 00:00 och 06:00 vandrar maskinerna runt i
+      mörkret.</p>
+    <p>Flytta musen (eller fingret) för att titta runt. Stäng dörren när något står utanför – men dörrarna och kamerorna
+      kostar ström. Tar strömmen slut är du ensam i mörkret.</p>
+    <p><kbd>A</kbd>/<kbd>D</kbd> dörrar &nbsp; <kbd>Mellanslag</kbd> kamera &nbsp; <kbd>1</kbd>–<kbd>9</kbd> eller
+      <kbd>Q</kbd>/<kbd>E</kbd> byt kamera (11 kameror, klicka även på kartan)</p>
+    <p><b>Speldosan i lagret (kamera 6, SPELDOSAN):</b> den tappar ström hela tiden. Titta på kamera 6 och håll in
+      <kbd>V</kbd> för att veva, annars vaknar Dockan. Hör du en melodi som blir allt långsammare är det dags.</p>
+    <p style="opacity:.7">Hörlurar rekommenderas. Spelet innehåller hoppskrämmor och blixtrande ljus.</p>
+    <button class="btn" id="start">BÖRJA NATTEN</button>
+  </div>
+  <div class="ov" id="dead">
+    <h1>DU BLEV FÅNGAD</h1>
+    <p id="deadmsg">De hittade dig.</p>
+    <button class="btn" id="retry">FÖRSÖK IGEN</button>
+  </div>
+  <div class="ov" id="won">
+    <h1>06:00</h1>
+    <p>Solen går upp. Du överlevde natten.</p>
+    <button class="btn" id="again">SPELA IGEN</button>
+  </div>
+  <script>
+    "use strict";
+    /* =========================================================
+       Minimal 3D-motor i ren WebGL (egen matte, egen shader,
+       punktljus per pixel, dimma) + spel ovanpå.
+       Alla figurer är egna original-karaktärer.
+       ========================================================= */
+    const $ = id => document.getElementById(id);
+    const canvas = $('gl');
+    const gl = canvas.getContext('webgl', { antialias: true });
+    if (!gl) { document.body.innerHTML = '<p style="padding:2em;color:#fff">Din webbläsare stödjer inte WebGL.</p>'; throw new Error('no webgl'); }
+
+    /* ---------- matte ---------- */
+    const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; };
+    const ident = () => { const m = new Float32Array(16); m[0] = m[5] = m[10] = m[15] = 1; return m; };
+    const translate = (x, y, z) => { const m = ident(); m[12] = x; m[13] = y; m[14] = z; return m; };
+    const rotY = a => { const m = ident(), c = Math.cos(a), s = Math.sin(a); m[0] = c; m[2] = -s; m[8] = s; m[10] = c; return m; };
+    const rotX = a => { const m = ident(), c = Math.cos(a), s = Math.sin(a); m[5] = c; m[6] = s; m[9] = -s; m[10] = c; return m; };
+    const perspective = (fovy, asp, n, f) => { const m = new Float32Array(16), t = 1 / Math.tan(fovy / 2); m[0] = t / asp; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f); return m; };
+
+    /* ---------- shader ---------- */
+    const NL = 16;
+    const VS = `
+attribute vec3 aP; attribute vec3 aN;
+uniform mat4 uM; uniform mat4 uVP; uniform mat3 uR;
+varying vec3 vN; varying vec3 vW;
+void main(){ vec4 w = uM*vec4(aP,1.0); vW = w.xyz; vN = uR*aN; gl_Position = uVP*w; }`;
+    const FS = `
+precision mediump float;
+varying vec3 vN; varying vec3 vW;
+uniform vec3 uColor; uniform float uEmis; uniform float uPat; uniform float uAmb;
+uniform vec3 uLP[${NL}]; uniform vec3 uLC[${NL}];
+uniform vec3 uCam; uniform vec3 uFog;
+void main(){
+  vec3 n = normalize(vN);
+  vec3 c = uColor;
+  if(uPat > 0.5){ float k = mod(floor(vW.x) + floor(vW.z), 2.0); c *= 0.62 + 0.38*k; }
+  vec3 l = vec3(uAmb);
+  for(int i=0;i<${NL};i++){
+    vec3 d = uLP[i] - vW; float dist = length(d);
+    float a = 1.0/(1.0 + 0.10*dist*dist);
+    float df = max(dot(n, d/dist), 0.0)*0.85 + 0.15;
+    l += uLC[i]*df*a;
+  }
+  vec3 col = c*l + uColor*uEmis;
+  float f = exp(-length(vW-uCam)*0.045);
+  col = mix(uFog, col, f);
+  gl_FragColor = vec4(pow(clamp(col,0.0,1.0), vec3(0.9)), 1.0);
+}`;
+    function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s)); return s; }
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog); gl.useProgram(prog);
+    const U = {};['uM', 'uVP', 'uR', 'uColor', 'uEmis', 'uPat', 'uAmb', 'uLP', 'uLC', 'uCam', 'uFog'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    const aP = gl.getAttribLocation(prog, 'aP'), aN = gl.getAttribLocation(prog, 'aN');
+    gl.enableVertexAttribArray(aP); gl.enableVertexAttribArray(aN);
+    gl.enable(gl.DEPTH_TEST);
+
+    /* ---------- meshar ---------- */
+    function mkMesh(verts, idx) {
+      const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+      const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(idx), gl.STATIC_DRAW);
+      return { vb, ib, n: idx.length };
+    }
+    const cube = (() => {
+      const F = [[0, 0, 1, [-1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1]], [0, 0, -1, [1, -1, -1, -1, -1, -1, -1, 1, -1, 1, 1, -1]],
+      [1, 0, 0, [1, -1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1]], [-1, 0, 0, [-1, -1, -1, -1, -1, 1, -1, 1, 1, -1, 1, -1]],
+      [0, 1, 0, [-1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, -1]], [0, -1, 0, [-1, -1, -1, 1, -1, -1, 1, -1, 1, -1, -1, 1]]];
+      const v = [], ix = [];
+      F.forEach((f, i) => { for (let k = 0; k < 4; k++) v.push(f[3][k * 3] * .5, f[3][k * 3 + 1] * .5, f[3][k * 3 + 2] * .5, f[0], f[1], f[2]); const b = i * 4; ix.push(b, b + 1, b + 2, b, b + 2, b + 3); });
+      return mkMesh(v, ix);
+    })();
+    const sphere = (() => {
+      const LA = 12, LO = 18, v = [], ix = [];
+      for (let i = 0; i <= LA; i++) for (let j = 0; j <= LO; j++) {
+        const th = i * Math.PI / LA, ph = j * 2 * Math.PI / LO, x = Math.sin(th) * Math.cos(ph), y = Math.cos(th), z = Math.sin(th) * Math.sin(ph);
+        v.push(x * .5, y * .5, z * .5, x, y, z);
+      }
+      for (let i = 0; i < LA; i++) for (let j = 0; j < LO; j++) { const a = i * (LO + 1) + j, b = a + LO + 1; ix.push(a, b, a + 1, b, b + 1, a + 1); }
+      return mkMesh(v, ix);
+    })();
+
+    /* ---------- ritfunktion ---------- */
+    const M = new Float32Array(16), R = new Float32Array(9);
+    let boundMesh = null;
+    function draw(mesh, x, y, z, sx, sy, sz, ry, col, em, pat) {
+      if (boundMesh !== mesh) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vb); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.ib);
+        gl.vertexAttribPointer(aP, 3, gl.FLOAT, false, 24, 0); gl.vertexAttribPointer(aN, 3, gl.FLOAT, false, 24, 12);
+        boundMesh = mesh;
+      }
+      const c = Math.cos(ry), s = Math.sin(ry);
+      M.fill(0); M[0] = c * sx; M[2] = -s * sx; M[5] = sy; M[8] = s * sz; M[10] = c * sz; M[12] = x; M[13] = y; M[14] = z; M[15] = 1;
+      R[0] = c; R[1] = 0; R[2] = -s; R[3] = 0; R[4] = 1; R[5] = 0; R[6] = s; R[7] = 0; R[8] = c;
+      gl.uniformMatrix4fv(U.uM, false, M); gl.uniformMatrix3fv(U.uR, false, R);
+      gl.uniform3f(U.uColor, col[0], col[1], col[2]); gl.uniform1f(U.uEmis, em || 0); gl.uniform1f(U.uPat, pat || 0);
+      gl.drawElements(gl.TRIANGLES, mesh.n, gl.UNSIGNED_SHORT, 0);
+    }
+
+    /* ---------- världen (statiska lådor) ---------- */
+    const WORLD = [];
+    const box = (x, y, z, w, h, d, col, pat, em) => WORLD.push({ x, y, z, w, h, d, col, pat: pat || 0, em: em || 0 });
+    const WALL = [.34, .38, .40], WALL2 = [.28, .30, .34], WOOD = [.36, .25, .16];
+    // golv & tak
+    box(0, -.05, -19, 24, .1, 42, [.55, .55, .58], 1);
+    box(0, 3.45, -19, 24, .1, 42, [.30, .31, .34]);
+    // ytterväggar
+    box(-12.05, 1.7, -19, .1, 3.4, 42, WALL); box(12.05, 1.7, -19, .1, 3.4, 42, WALL);
+    box(0, 1.7, -40.05, 24, 3.4, .1, WALL);
+    for (const s of [-1, 1]) {
+      // innervägg mellan korridor och sidorum (dörröppning vid z=-9)
+      box(s * 5.55, 1.7, -13.6, .1, 3.4, 6.8, WALL); box(s * 5.55, 1.7, -5.9, .1, 3.4, 3.8, WALL); box(s * 5.55, 2.9, -9, .1, 1.0, 2.4, WALL);
+      // sidorummets framvägg
+      box(s * 8.75, 1.7, -4, 6.5, 3.4, .3, WALL);
+      // bakvägg mot lagret, öppning vid x=±8.5
+      box(s * 10.75, 1.7, -17.05, 2.5, 3.4, .1, WALL); box(s * 6.5, 1.7, -17.05, 2, 3.4, .1, WALL); box(s * 8.5, 2.9, -17.05, 2, 1.0, .1, WALL);
+      // hallens bakvägg (öppning i mitten)
+      box(s * 3.5, 1.7, -17.05, 4, 3.4, .1, WALL);
+      // lagrets fem rum: FÖRRÅD, VERKSTAD (fram), ARKIV, PANNRUM (bak) och LAGRET (mitten)
+      box(s * 5.55, 1.7, -37.1, .1, 3.4, 5.8, WALL2); box(s * 5.55, 1.7, -27.5, .1, 3.4, 8.6, WALL2); box(s * 5.55, 1.7, -18.9, .1, 3.4, 3.8, WALL2);
+      box(s * 5.55, 2.9, -22, .1, 1.0, 2.4, WALL2); box(s * 5.55, 2.9, -33, .1, 1.0, 2.4, WALL2);
+      box(s * 10.75, 1.7, -27, 2.5, 3.4, .1, WALL2); box(s * 6.5, 1.7, -27, 2, 3.4, .1, WALL2); box(s * 8.5, 2.9, -27, 2, 1.0, .1, WALL2);
+      box(s * 3, 1.7, -29, .6, 3.4, .6, WALL2);
+      box(s * 3.5, .35, -34, 1.0, .7, 1.0, [.35, .33, .40]);
+      if (s < 0) {
+        box(-11.4, .9, -19.5, .8, 1.8, 2.4, [.40, .30, .20]); box(-11.4, .9, -23.5, .8, 1.8, 2.4, [.38, .30, .22]); box(-10.3, .4, -25.3, 1.2, .8, 1.2, [.5, .4, .25]);
+        for (const z of [-30, -33, -36, -39]) box(-11.2, .9, z, 1, 1.8, 1.4, [.40, .42, .46]);
+      } else {
+        box(11, .5, -22, 1.2, 1, 5, [.40, .30, .20]); box(10, .9, -18.8, 1.5, 1.8, 1.4, [.30, .35, .40]);
+        box(10.5, 1.5, -33, 1.4, 3, 1.4, [.50, .25, .15]); box(7.5, .5, -30, 1, 1, 1, [.40, .30, .20]); box(8.5, 3.1, -36, .3, .3, 6, [.40, .40, .45]);
+      }
+      // festrum / kök: bord och bänk
+      box(s * 9, .4, -8, 2.2, .8, 1.1, [.45, .30, .35]); box(s * 9, .9, -8, .4, .2, .4, [.85, .30, .50]);
+      box(s * 9, .4, -13, 2.2, .8, 1.1, [.45, .30, .35]); box(s * 9, .9, -13, .4, .2, .4, [.30, .70, .80]);
+      box(s * 11.4, .5, -10, 1, 1, 8, s < 0 ? [.50, .40, .35] : [.55, .55, .58]);
+    }
+    box(0, 2.9, -17.05, 3, 1.0, .1, WALL);
+    // mattor ger varje rum sin färg
+    box(-8.75, .012, -22, 6.5, .02, 10, [.55, .28, .22]); box(8.75, .012, -22, 6.5, .02, 10, [.22, .36, .58]);
+    box(-8.75, .012, -33.5, 6.5, .02, 13, [.22, .42, .28]); box(8.75, .012, -33.5, 6.5, .02, 13, [.52, .42, .16]);
+    box(0, .012, -28.5, 11, .02, 23, [.30, .30, .36]);
+    // speldosan i lagret
+    box(0, .35, -34, .9, .7, .9, [.75, .35, .5]); box(0, .76, -34, 1.0, .08, 1.0, [.9, .8, .3]);
+    // kontor
+    box(0, 1.7, 2.05, 7.1, 3.4, .1, WALL2);
+    box(-3.55, 1.7, -1, .1, 3.4, 6, WALL2); box(3.55, 1.7, -1, .1, 3.4, 6, WALL2);
+    // framvägg med två dörröppningar (x=±2.4, bredd 1.4)
+    box(-3.3, 1.7, -4, .4, 3.4, .3, WALL); box(3.3, 1.7, -4, .4, 3.4, .3, WALL);
+    box(0, .5, -4, 3.4, 1.0, .3, WALL); box(0, 3.05, -4, 3.4, .7, .3, WALL);
+    box(-1.6, 1.85, -4, .2, 1.7, .3, WALL); box(1.6, 1.85, -4, .2, 1.7, .3, WALL);
+    box(-2.4, 2.9, -4, 1.4, 1.0, .3, WALL); box(2.4, 2.9, -4, 1.4, 1.0, .3, WALL);
+    box(-4.5, 1.7, -4, 2, 3.4, .3, WALL); box(4.5, 1.7, -4, 2, 3.4, .3, WALL);
+    // mittblock
+    box(0, 1.7, -10.5, 2.4, 3.4, 3, WALL2);
+    // scen
+    box(0, .25, -15.7, 5.4, .5, 2.6, [.38, .20, .20]);
+    box(-2.2, 1.7, -16.9, 1.6, 3, .1, [.55, .08, .10]); box(2.2, 1.7, -16.9, 1.6, 3, .1, [.55, .08, .10]);
+    box(0, 3.0, -16.9, 3, .55, .1, [.75, .6, .2], 0, .25);
+    // bord & saker i korridorerna
+    [[-4.6, -8], [-4.6, -13.5], [4.6, -8], [4.6, -13.5]].forEach(p => { box(p[0], .4, p[1], .9, .8, 1.6, [.42, .30, .22]); box(p[0], .88, p[1], .35, .16, .35, [.8, .2, .4]); });
+    box(-3.2, .25, -15, .5, .5, .5, [.5, .45, .2]); box(3.6, .3, -11, .6, .6, .6, [.3, .35, .5]);
+    // kontorsmöbler
+    box(0, .4, -1.4, 3.2, .8, 1.0, WOOD);
+    box(0, 1.05, -1.55, .95, .58, .08, [.08, .08, .09]);
+    box(0, 1.05, -1.5, .84, .46, .02, [.2, .5, .65], 0, .8);
+    box(0, .86, -1.5, .2, .1, .2, [.1, .1, .1]);
+    box(1.2, .9, -1.2, .25, .2, .25, [.15, .15, .18]);
+    // affischer på väggen mellan dörrarna
+    box(-3.48, 1.8, -1, .02, .9, .7, [.7, .55, .2]); box(3.48, 1.9, -.6, .02, .8, .6, [.25, .4, .65]);
+    // (stolen sitter under kameran, så den ritas inte)
+
+    /* ---------- kameror ---------- */
+    const look = (p, t) => { const dx = t[0] - p[0], dy = t[1] - p[1], dz = t[2] - p[2]; return { pos: p, yaw: Math.atan2(-dx, -dz), pitch: Math.atan2(dy, Math.hypot(dx, dz)) }; };
+    const CAMS = [
+      { name: 'SCEN', pos: [0, 3.1, -12.3], yaw: 0, pitch: -.22 },
+      { name: 'VÄNSTER KORRIDOR', ...look([-5.2, 3.1, -12.8], [-2.4, 1.2, -4.4]) },
+      { name: 'HÖGER KORRIDOR', ...look([5.2, 3.1, -12.8], [2.4, 1.2, -4.4]) },
+      { name: 'FESTRUM', ...look([-11.5, 3.1, -4.6], [-8.5, .5, -14]) },
+      { name: 'KÖK', ...look([11.5, 3.1, -4.6], [8.5, .5, -14]) },
+      { name: 'SPELDOSAN', ...look([0, 3.2, -39.4], [0, .9, -34]) },
+      { name: 'LAGRET', ...look([0, 3.2, -18.2], [0, .8, -33]) },
+      { name: 'FÖRRÅD', ...look([-11.5, 3.2, -26.5], [-8, .8, -19]) },
+      { name: 'VERKSTAD', ...look([11.5, 3.2, -26.5], [8, .8, -19]) },
+      { name: 'ARKIV', ...look([-11.5, 3.2, -39.5], [-8, .8, -29]) },
+      { name: 'PANNRUM', ...look([11.5, 3.2, -39.5], [8, .8, -29]) },
+    ];
+
+    /* ---------- originalfigurer ---------- */
+    const WHITE = [.9, .9, .85], DARK = [.02, .02, .02];
+    function part(m, bx, by, bz, rot, s, ox, oy, oz, sx, sy, sz, col, em) {
+      const c = Math.cos(rot), sn = Math.sin(rot);
+      draw(m, bx + (c * ox + sn * oz) * s, by + oy * s, bz + (-sn * ox + c * oz) * s, sx * s, sy * s, sz * s, rot, col, em || 0, 0);
+    }
+    // stilar: 0 Kramse (björn), 1 Hoppe (hare), 3 Kattis (katt), 4 Pip (kyckling), 5 Rävis (räv), 6 Muffin (mus), 7 Krok (krokodil)
+    const STYLES = {
+      0: { body: [.34, .45, .50], eye: [1, .85, .15], ears: 'round', acc: 'scarf', snout: 'bear' },
+      1: { body: [.52, .38, .60], eye: [1, .12, .08], ears: 'hare', acc: 'bow', snout: 'bear' },
+      3: { body: [.78, .46, .20], eye: [.3, 1, .3], ears: 'point', acc: 'bell', snout: 'bear' },
+      4: { body: [.86, .76, .25], eye: [.3, .7, 1], ears: 'tuft', acc: 'bib', snout: 'beak' },
+      5: { body: [.70, .28, .14], eye: [1, 1, .85], ears: 'point', acc: 'scarf2', snout: 'fox' },
+      6: { body: [.55, .55, .62], eye: [.8, .9, 1], ears: 'big', acc: 'bib', snout: 'bear' }, 7: { body: [.22, .48, .24], eye: [1, .9, .1], ears: 'none', acc: 'none', snout: 'croc' },
+    };
+    function animatronic(kind, x, y, z, rot, t, s, sway, open, eyeLevel) {
+      const S = STYLES[kind] || STYLES[0], body = S.body, eye = S.eye, cream = [.82, .76, .62];
+      const P = (ox, oy, oz, sx, sy, sz, c, em, m) => part(m || cube, x, y, z, rot, s, ox, oy, oz, sx, sy, sz, c, em);
+      P(-.25, .35, 0, .3, .7, .32, body); P(.25, .35, 0, .3, .7, .32, body);
+      P(0, 1.2, 0, .95, 1.0, .55, body);
+      P(0, 1.1, .28, .6, .6, .06, S.acc === 'bib' ? [.9, .9, .85] : cream);
+      if (S.acc === 'bow') P(0, 1.76, .3, .55, .2, .12, [.6, .1, .5]);
+      else if (S.acc === 'scarf') P(0, 1.78, 0, 1.05, .2, .62, [.8, .6, .1]);
+      else if (S.acc === 'scarf2') P(0, 1.78, 0, 1.05, .2, .62, [.15, .2, .5]);
+      else if (S.acc === 'bell') P(0, 1.7, .32, .16, .16, .16, [.9, .8, .2], 0, sphere);
+      const sw = Math.sin(t * 1.7) * .06;
+      P(-.64, 1.2, .05 + sw, .22, .9, .26, body); P(.64, 1.2, .05 - sw, .22, .9, .26, body);
+      const hr = rot + Math.sin(t * .8) * .18 * sway + Math.sin(t * 13) * .03 * sway;
+      const hx = x, hy = y + 2.35 * s, hz = z;
+      const H = (ox, oy, oz, sx, sy, sz, c, em, m) => part(m || cube, hx, hy, hz, hr, s, ox, oy, oz, sx, sy, sz, c, em);
+      H(0, 0, 0, .9, .8, .85, body, 0, sphere);
+      switch (S.ears) {
+        case 'hare': H(-.22, .95, 0, .16, .95, .1, body); H(.22, .95, 0, .16, .95, .1, body); H(.22, 1.0, .06, .06, .7, .02, [.8, .4, .6]); break;
+        case 'round': H(-.4, .45, 0, .34, .34, .2, body, 0, sphere); H(.4, .45, 0, .22, .26, .16, body, 0, sphere); break;
+        case 'point': H(-.3, .55, 0, .22, .45, .12, body); H(.3, .55, 0, .22, .45, .12, body); break;
+        case 'tuft': H(0, .52, .02, .14, .3, .1, body); H(0, .5, .1, .2, .2, .12, [.8, .1, .1], 0, sphere); break;
+        case 'big': H(-.46, .38, -.04, .5, .5, .12, body, 0, sphere); H(.46, .38, -.04, .5, .5, .12, body, 0, sphere); H(-.46, .38, .04, .3, .3, .06, [.8, .5, .55], 0, sphere); H(.46, .38, .04, .3, .3, .06, [.8, .5, .55], 0, sphere); break;
+      }
+      let mz = .5, tz = .56;
+      if (S.snout === 'beak') { H(0, -.1, .5, .34, .16, .34, [.95, .55, .1]); mz = .5; }
+      else if (S.snout === 'fox') { H(0, -.12, .55, .3, .22, .5, cream); H(0, -.04, .8, .1, .08, .08, DARK, 0, sphere); mz = .6; tz = .7; }
+      else if (S.snout === 'croc') { H(0, -.15, .62, .55, .22, .8, body); H(0, -.3, .62, .5, .1, .7, [.8, .85, .6]); mz = .75; tz = .85; }
+      else { H(0, -.12, .42, .46, .28, .3, cream); H(0, -.02, .58, .15, .1, .1, DARK, 0, sphere); }
+      if (S.snout !== 'beak') {
+        H(0, -.27 - open * .12, mz, .36, .06 + open * .2, .1, DARK);
+        H(-.1, -.22, tz, .06, .07, .04, WHITE); H(.1, -.22, tz, .06, .07, .04, WHITE);
+        if (open > .3) { H(-.1, -.33 - open * .1, tz, .06, .07, .04, WHITE); H(.1, -.33 - open * .1, tz, .06, .07, .04, WHITE); }
+      }
+      const ey = S.snout === 'croc' ? .22 : .12;
+      H(-.2, ey, .38, .26, .26, .1, DARK, 0, sphere); H(.2, ey, .38, .26, .26, .1, DARK, 0, sphere);
+      H(-.2, ey, .45, .09, .09, .05, eye, eyeLevel, sphere); H(.2, ey, .45, .09, .09, .05, eye, eyeLevel, sphere);
+    }
+
+    // Dockan: lång smal figur med vit mask som bor i speldosan
+    function puppet(x, y, z, rot, t, s, open, eyeLvl) {
+      const black = [.04, .04, .05], white = [.92, .9, .86], red = [.8, .1, .12];
+      const P = (ox, oy, oz, sx, sy, sz, c, em, m) => part(m || cube, x, y, z, rot, s, ox, oy, oz, sx, sy, sz, c, em);
+      P(0, 1.0, 0, .28, 1.7, .2, black);
+      P(-.36, 1.25, 0, .08, 1.5, .08, black); P(.36, 1.25, 0, .08, 1.5, .08, black);
+      const hy = y + 2.1 * s, hr = rot + Math.sin(t * 1.3) * .12;
+      const H = (ox, oy, oz, sx, sy, sz, c, em, m) => part(m || cube, x, hy, z, hr, s, ox, oy, oz, sx, sy, sz, c, em);
+      H(0, 0, 0, .62, .7, .55, white, 0, sphere);
+      H(-.19, -.1, .26, .15, .1, .04, red, 0, sphere); H(.19, -.1, .26, .15, .1, .04, red, 0, sphere);
+      H(-.15, .1, .26, .15, .2, .05, DARK, 0, sphere); H(.15, .1, .26, .15, .2, .05, DARK, 0, sphere);
+      H(-.15, .1, .29, .05, .05, .03, [1, .2, .2], eyeLvl, sphere); H(.15, .1, .29, .05, .05, .03, [1, .2, .2], eyeLvl, sphere);
+      H(0, -.25 - open * .08, .26, .3, .04 + open * .16, .05, DARK);
+    }
+
+    /* ---------- ljud ---------- */
+    let AC = null, master = null;
+    function initAudio() {
+      if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+      try {
+        AC = new (window.AudioContext || window.webkitAudioContext)();
+        master = AC.createGain(); master.gain.value = .6; master.connect(AC.destination);
+        [[55, 'sine', .05], [57.4, 'sine', .05], [110.6, 'triangle', .012]].forEach(a => { const o = AC.createOscillator(); o.type = a[1]; o.frequency.value = a[0]; const g = AC.createGain(); g.gain.value = a[2]; o.connect(g); g.connect(master); o.start(); });
+      } catch (e) { AC = null; }
+    }
+    function nbuf(d) { const n = (AC.sampleRate * d) | 0, b = AC.createBuffer(1, n, AC.sampleRate), a = b.getChannelData(0); for (let i = 0; i < n; i++) a[i] = Math.random() * 2 - 1; return b; }
+    function noise(d, v, f, type, delay) {
+      if (!AC) return; const s = AC.createBufferSource(); s.buffer = nbuf(d);
+      const fl = AC.createBiquadFilter(); fl.type = type || 'lowpass'; fl.frequency.value = f;
+      const g = AC.createGain(), t0 = AC.currentTime + (delay || 0); g.gain.setValueAtTime(v, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + d);
+      s.connect(fl); fl.connect(g); g.connect(master); s.start(t0);
+    }
+    function tone(f, d, v, type, f2, delay) {
+      if (!AC) return; const o = AC.createOscillator(); o.type = type || 'sine';
+      const t0 = AC.currentTime + (delay || 0); o.frequency.setValueAtTime(f, t0); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + d);
+      const g = AC.createGain(); g.gain.setValueAtTime(v, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + d);
+      o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + d + .05);
+    }
+    const sfx = {
+      door: () => { noise(.35, .5, 500); tone(90, .3, .5, 'sine', 40); },
+      click: () => noise(.08, .25, 3000, 'highpass'),
+      thump: v => tone(70, .35, v, 'sine', 35),
+      knock: () => { for (let i = 0; i < 3; i++) { tone(130, .12, .5, 'square', 80, i * .16); noise(.1, .3, 600, 'lowpass', i * .16); } },
+      creak: () => tone(300 + Math.random() * 200, .6, .04, 'sawtooth', 120),
+      scream: () => { noise(1.4, .9, 3000, 'bandpass'); tone(380, 1.3, .5, 'sawtooth', 1100); tone(190, 1.3, .4, 'square', 700); },
+      power: () => { tone(220, 1.6, .4, 'sawtooth', 30); noise(.8, .4, 300); },
+      chime: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 1.2, .25, 'sine', null, i * .28)),
+      box: () => [784, 659, 880, 698].forEach((f, i) => tone(f, .5, .12, 'triangle', null, i * .22 + i * i * .03)),
+      out: () => { tone(520, .9, .3, 'sawtooth', 90); noise(.5, .3, 800); },
+    };
+
+    /* ---------- spelstate ---------- */
+    const NIGHT = 270, HOUR = NIGHT / 6, FINAL = 5;
+    let mode = 'menu', t = 0, gt = 0, power = 100, camUp = false, camIdx = 0, glitch = 0, blackout = false, bt = 0, dyingT = 0, killer = null;
+    let yaw = 0, pitch = 0, mx = .5, my = .5;
+    const doors = [{ closed: false, pos: 0 }, { closed: false, pos: 0 }]; // 0 = vänster, 1 = höger
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    let enemies;
+    let mbox = { m: 100, out: false, t: 0, tk: 3 }, windHeld = false;
+    const pup = { kind: 2, name: 'Dockan' };
+    function newGame() {
+      mbox = { m: 100, out: false, t: 0, tk: 3 }; windHeld = false;
+      gt = 0; power = 100; camUp = false; camIdx = 0; blackout = false; bt = 0; killer = null; dyingT = 0;
+      doors.forEach(d => { d.closed = false; d.pos = 0; });
+      enemies = mkEnemies();
+      ['menu', 'dead', 'won'].forEach(i => $(i).style.display = 'none');
+      mode = 'play'; setCam(false); refreshHud();
+    }
+    // väg: start → (lager) → festrum/kök → korridor → dörren   [x, y, z, vridning]
+    const tail = sd => [[sd * 8.5, 0, -20, 0], [sd * 8.5, 0, -12, -sd * Math.PI / 2], [sd * 4, 0, -10, -sd * .3], [sd * 3, 0, -7, -sd * .25], [sd * 2.4, 0, -5, 0]];
+    function mkEnemies() {
+      const E = (name, kind, side, start, mids, from, ag) => ({ name, kind, side, path: [start, ...mids, ...tail(side)], state: 0, mt: rnd(8, 12) + from * 2, at: 0, from, ag });
+      return [
+        E('Kramse', 0, -1, [-1.3, .5, -15.7, 0], [], 0, 0),
+        E('Hoppe', 1, 1, [1.3, .5, -15.7, 0], [], 0, -.04),
+        E('Kattis', 3, -1, [-8.5, 0, -35, .4], [[-8.5, 0, -24, 0]], 1, -.06),
+        E('Pip', 4, 1, [9, 0, -36, -.4], [[8.5, 0, -24, 0]], 1, -.06),
+        E('Rävis', 5, -1, [-3, 0, -26, 0], [[-7.5, 0, -22.5, 0]], 2, -.08),
+        E('Muffin', 6, 1, [3, 0, -30, 0], [[7.5, 0, -22.5, 0]], 2, -.08),
+        E('Krok', 7, 1, [0, 0, -38, 0], [[2, 0, -31, 0], [7, 0, -32.5, 0], [8.5, 0, -23.5, 0]], 3, -.10),
+      ];
+    }
+    function enemyPos(e) {
+      const p = e.path[Math.min(e.state, e.path.length - 1)];
+      return { x: p[0], y: p[1], z: p[2], r: p[3] };
+    }
+    function setCam(on) {
+      if (on && (blackout || mode !== 'play')) return;
+      camUp = on; glitch = .35; sfx.click();
+      canvas.classList.toggle('cam', on);
+      $('scan').style.display = on ? 'block' : 'none';
+      $('camhdr').style.display = on ? 'block' : 'none';
+      $('camsel').style.display = on ? 'flex' : 'none';
+      $('bC').classList.toggle('on', on);
+      if (on) { $('camname').textContent = 'CAM ' + (camIdx + 1) + ' — ' + CAMS[camIdx].name; refreshCamSel(); }
+    }
+    function pickCam(i) { if (!camUp) return; camIdx = i; glitch = .4; sfx.click(); $('camname').textContent = 'CAM ' + (i + 1) + ' — ' + CAMS[i].name; refreshCamSel(); }
+    let mapDoors = [], mapCams = [];
+    function refreshCamSel() { mapCams.forEach((c, i) => { c.setAttribute('stroke', i === camIdx ? '#7f7' : '#6a8a6a'); c.setAttribute('fill', i === camIdx ? '#1d5a1d' : '#101810'); }); }
+    /* karta: kamerorna är klickbara noder, dörrarna visar öppen/stängd */
+    function buildMap() {
+      const MW = 220, MH = 300, NS = 'http://www.w3.org/2000/svg';
+      const X = x => (x + 12) / 24 * MW, Z = z => (z + 40) / 42 * MH;
+      const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', `0 0 ${MW} ${MH}`);
+      const el = (n, a, p) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; };
+      const room = (x0, x1, zFar, zNear, label, col) => {
+        el('rect', { x: X(x0), y: Z(zFar), width: X(x1) - X(x0), height: Z(zNear) - Z(zFar), fill: col || 'rgba(24,44,28,.8)', stroke: '#4a6a4a', 'stroke-width': 1.2 });
+        if (label) el('text', { x: (X(x0) + X(x1)) / 2, y: (Z(zFar) + Z(zNear)) / 2 + 3, 'text-anchor': 'middle', 'font-size': 9, fill: '#8fa88f', 'pointer-events': 'none' }).textContent = label;
+      };
+      room(-5.5, 5.5, -40, -17, 'LAGRET'); room(-12, -5.5, -27, -17, 'FÖRRÅD'); room(5.5, 12, -27, -17, 'VERKSTAD'); room(-12, -5.5, -40, -27, 'ARKIV'); room(5.5, 12, -40, -27, 'PANNRUM'); room(-12, -5.5, -17, -4, 'FESTRUM'); room(5.5, 12, -17, -4, 'KÖK');
+      room(-5.5, 5.5, -17, -12, 'SCEN'); room(-5.5, -1.2, -12, -4, ''); room(1.2, 5.5, -12, -4, ''); room(-1.2, 1.2, -9, -4, '');
+      room(-3.5, 3.5, -4, 2, 'DU ÄR HÄR', 'rgba(60,50,20,.8)');
+      mapDoors = [-2.4, 2.4].map(x => el('rect', { x: X(x) - 7, y: Z(-4) - 2, width: 14, height: 4, fill: '#3d3' }));
+      mapCams = CAMS.map((c, i) => {
+        const g = el('g', {});
+        const cx = Math.min(MW - 10, Math.max(10, X(c.pos[0]))), cy = Math.min(MH - 10, Math.max(10, Z(c.pos[2])));
+        const k = el('circle', { cx, cy, r: 9, fill: '#101810', stroke: '#6a8a6a', 'stroke-width': 2 }, g);
+        el('text', { x: cx, y: cy + 4, 'text-anchor': 'middle', 'font-size': 11, fill: '#cfe8cf', 'pointer-events': 'none' }, g).textContent = i + 1;
+        g.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); pickCam(i); });
+        return k;
+      });
+      const t = document.createElement('b'); t.textContent = 'KARTA';
+      $('camsel').appendChild(t); $('camsel').appendChild(svg);
+    }
+    const pupImm = () => mode === 'play' && mbox.out && mbox.t > 10.2;
+    // fönstret i kontoret: visar bara figuren precis innan den attackerar
+    function imminent(e) {
+      if (mode !== 'play') return false;
+      if (blackout) return e === enemies[0] && bt > 7;
+      if (e.state !== e.path.length - 1) return false;
+      return !doors[e.side < 0 ? 0 : 1].closed && e.at > 5.8 - Math.floor(gt / HOUR) * .2 - 1.8;
+    }
+    function toggleDoor(i) {
+      if (mode !== 'play' || blackout) return;
+      doors[i].closed = !doors[i].closed; sfx.door();
+      $('b' + (i ? 'R' : 'L')).classList.toggle('on', doors[i].closed);
+    }
+    function usage() { return 1 + doors.filter(d => d.closed).length + (camUp ? 1 : 0); }
+    function refreshHud() {
+      const h = Math.min(5, Math.floor(gt / HOUR));
+      $('hour').textContent = (h === 0 ? '12' : h) + ' AM';
+      $('pw').textContent = Math.max(0, Math.ceil(power));
+      $('usage').textContent = '▮'.repeat(usage());
+      $('usage').style.color = usage() > 3 ? '#f55' : usage() > 2 ? '#fb4' : '#7f7';
+      mapDoors.forEach((r, i) => r.setAttribute('fill', doors[i].closed ? '#e33' : '#3d3'));
+      $('wind').style.display = (camUp && camIdx === 5) ? 'flex' : 'none';
+      $('wbar').style.width = mbox.m + '%';
+      $('wbar').style.background = mbox.m < 30 ? '#f55' : mbox.m < 60 ? '#fb4' : '#7f7';
+      $('wwarn').style.display = mbox.out ? 'block' : 'none';
+    }
+    function kill(e) {
+      if (mode !== 'play') return;
+      mode = 'dying'; killer = e; dyingT = 0; setCam(false); sfx.scream();
+      $('deadmsg').textContent = e.name + ' hittade dig klockan ' + $('hour').textContent + '.';
+    }
+
+    /* ---------- uppdatering ---------- */
+    function update(dt) {
+      if (mode === 'dying') {
+        dyingT += dt;
+        $('flash').style.opacity = Math.max(0, .55 - dyingT * .4) * (Math.random() < .5 ? 1 : .3);
+        if (dyingT > 1.7) { mode = 'dead'; $('dead').style.display = 'flex'; $('flash').style.opacity = 0; }
+        return;
+      }
+      if (mode !== 'play') return;
+      gt += dt;
+      const hour = Math.floor(gt / HOUR);
+      // dörranimation
+      doors.forEach(d => { const tgt = d.closed ? 1 : 0; d.pos += Math.sign(tgt - d.pos) * Math.min(Math.abs(tgt - d.pos), dt * 4); });
+      // ström
+      power -= dt * (.10 + .22 * (usage() - 1));
+      if (power <= 0 && !blackout) {
+        power = 0; blackout = true; bt = 0; sfx.power();
+        doors.forEach((d, i) => { d.closed = false; $('b' + (i ? 'R' : 'L')).classList.remove('on'); });
+        setCam(false);
+        const k = enemies[0]; k.state = k.path.length - 1; k.at = 0;
+      }
+      if (blackout) { bt += dt; if (bt > 3 && Math.random() < dt * .8) sfx.creak(); if (bt > 9) { kill(enemies[0]); return; } }
+      else {
+        enemies.forEach(e => {
+          if (hour < e.from) return;
+          if (e.state < e.path.length - 1) {
+            e.mt -= dt;
+            if (e.mt <= 0) {
+              e.mt = rnd(4, 7) - hour * .35;
+              const chance = .5 + hour * .08 + e.ag;
+              if (Math.random() < chance) { e.state++; e.at = 0; sfx.thump(.08 + e.state * .07); }
+            }
+          } else {
+            e.at += dt;
+            const d = doors[e.side < 0 ? 0 : 1];
+            if (d.closed && e.at > 2.2) { e.state = 2; e.mt = rnd(8, 12); e.at = 0; sfx.knock(); }
+            else if (!d.closed && e.at > 5.8 - hour * .2) { kill(e); }
+          }
+        });
+        // speldosan: måste vevas på kamera 6, annars vaknar Dockan
+        const wind = windHeld && camUp && camIdx === 5;
+        if (wind) mbox.m = Math.min(100, mbox.m + 28 * dt);
+        else if (!mbox.out) mbox.m = Math.max(0, mbox.m - (1.6 + hour * .5) * dt);
+        if (!mbox.out) {
+          if (mbox.m <= 0) { mbox.out = true; mbox.t = 0; sfx.out(); }
+          else if (mbox.m < 45 && !wind) { mbox.tk -= dt; if (mbox.tk <= 0) { sfx.box(); mbox.tk = 1.5 + mbox.m / 45 * 5; } }
+        } else {
+          mbox.t += dt;
+          if (wind && mbox.m >= 35) { mbox.out = false; mbox.tk = 3; sfx.click(); }
+          else if (mbox.t > 12) { kill(pup); return; }
+        }
+        if (Math.random() < dt * .05) sfx.creak();
+      }
+      if (gt >= NIGHT) { mode = 'won'; setCam(false); $('won').style.display = 'flex'; sfx.chime(); }
+      refreshHud();
+    }
+
+    /* ---------- rendering ---------- */
+    const flick = (tm, seed, sev) => { const k = Math.sin(tm * (31 + seed)) * Math.sin(tm * (17 + seed * 3)) + Math.sin(tm * 3.1 + seed); return k > 1.55 - sev ? .1 + Math.random() * .3 : 1; };
+    const LP = new Float32Array(NL * 3), LC = new Float32Array(NL * 3);
+    function setLight(i, x, y, z, r, g, b, k) { LP[i * 3] = x; LP[i * 3 + 1] = y; LP[i * 3 + 2] = z; LC[i * 3] = r * k; LC[i * 3 + 1] = g * k; LC[i * 3 + 2] = b * k; }
+    function render(time) {
+      const w = canvas.width, h = canvas.height;
+      gl.viewport(0, 0, w, h);
+      let cp = [0, 1.25, .6], cy = yaw, cpi = pitch, amb = .07, fog = [.01, .012, .016];
+      const near = enemies ? enemies.filter(e => e.state >= e.path.length - 3).length : 0;
+      const sev = .12 + near * .18 + (blackout ? 1 : 0);
+      if (camUp) { const c = CAMS[camIdx]; cp = c.pos; cy = c.yaw; cpi = c.pitch; amb = .22; fog = [.03, .05, .03]; }
+      if (mode === 'dying') { cp = [0, 1.6, 0]; cy = 0; cpi = 0; amb = .6; fog = [.15, 0, 0]; }
+      gl.clearColor(fog[0], fog[1], fog[2], 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      const VP = mul(perspective(1.1, w / h, .1, 60), mul(rotX(-cpi), mul(rotY(-cy), translate(-cp[0], -cp[1], -cp[2]))));
+      gl.uniformMatrix4fv(U.uVP, false, VP);
+      gl.uniform3f(U.uCam, cp[0], cp[1], cp[2]); gl.uniform3f(U.uFog, fog[0], fog[1], fog[2]); gl.uniform1f(U.uAmb, blackout ? .012 : amb);
+      // ljus
+      const off = blackout ? 0 : 1;
+      setLight(0, 0, 3.0, -.5, 1.6, 1.25, .8, off * (blackout ? 0 : flick(time, 1, sev)));
+      setLight(1, -3.3, 3.2, -8, .5, .9, .9, off * flick(time, 4, sev) * .9);
+      setLight(2, 3.3, 3.2, -8, .5, .9, .9, off * flick(time, 7, sev) * .9);
+      setLight(3, 0, 3.2, -14, 1.0, .5, .4, off * .8);
+      setLight(4, 0, 1.1, -1.2, .2, .4, .6, off * .6);
+      setLight(5, -2.4, 3.2, -5.6, .6, .8, .9, off * flick(time, 11, sev));
+      setLight(6, 2.4, 3.2, -5.6, .6, .8, .9, off * flick(time, 13, sev));
+      setLight(7, 0, 3.2, -7, .45, .45, .6, off * .7);
+      setLight(8, -9, 3.2, -10, 1.0, .8, .9, off * flick(time, 17, sev) * .9);
+      setLight(9, 9, 3.2, -10, .9, 1.0, .8, off * flick(time, 19, sev) * .9);
+      setLight(10, 0, 3.2, -26, .5, .5, .7, off * .8);
+      setLight(11, 0, 3.2, -35, .6, .4, .4, off * flick(time, 23, sev) * .8);
+      setLight(12, -8.5, 3.2, -22, .8, .65, .45, off * flick(time, 29, sev) * .9);
+      setLight(13, 8.5, 3.2, -22, .45, .6, .9, off * flick(time, 31, sev) * .9);
+      setLight(14, -8.5, 3.2, -34, .45, .8, .55, off * flick(time, 37, sev) * .9);
+      setLight(15, 8.5, 3.2, -34, .9, .45, .35, off * flick(time, 41, sev) * .9);
+      if (mode === 'dying') { LC.fill(0); setLight(0, 0, 2.5, .3, 2.2, .5, .4, 1); }
+      gl.uniform3fv(U.uLP, LP); gl.uniform3fv(U.uLC, LC);
+
+      if (mode === 'dying') {
+        const k = killer, sc = 1.35 + Math.min(dyingT, .5) * .5, jit = Math.sin(dyingT * 60) * .06;
+        if (k.kind === 2) puppet(jit, -1.25, -1.3 + dyingT * .15, Math.sin(dyingT * 50) * .12, time, sc, Math.min(1, dyingT * 3), 1);
+        else animatronic(k.kind, jit, -1.55 + Math.abs(Math.sin(dyingT * 40)) * .05, -1.25 + dyingT * .15, Math.sin(dyingT * 50) * .12, time, sc, 3, Math.min(1, dyingT * 3), 1);
+        return;
+      }
+      // statiskt
+      for (const b of WORLD) draw(cube, b.x, b.y, b.z, b.w, b.h, b.d, 0, b.col, b.em, b.pat);
+      // fläkt
+      draw(cube, 1.2, 1.08, -1.2, .6, .03, .08, time * 9, [.6, .6, .62], 0, 0);
+      // fönsterlucka: öppnas först när något är precis på väg att attackera
+      const peek = (enemies && enemies.some(imminent)) || pupImm();
+      if (!peek) draw(cube, 0, 1.85, -3.92, 3.0, 1.7, .05, 0, [.10, .12, .14], 0, 0);
+      // Dockan kryper mot kameran i lagret när speldosan är tom
+      if (mbox.out && !pupImm()) puppet(0, .1, -34 - mbox.t / 12 * 4.2, 0, time, 1, 0, .7 + .3 * Math.random());
+      if (pupImm()) puppet(0, 0, -4.7, 0, time, 1, .6, 1);
+      // dörröppningarna är kolsvarta: man ser inte vad som står bakom
+      [-2.4, 2.4].forEach(x => draw(cube, x, 1.25, -4.1, 1.46, 2.5, .08, 0, [.004, .004, .007], 0, 0));
+      // dörrar
+      doors.forEach((d, i) => {
+        const x = i ? 2.4 : -2.4;
+        draw(cube, x, 1.25 + (1 - d.pos) * 2.6, -3.95, 1.5, 2.5, .12, 0, [.55, .58, .64], .06, 0);
+        draw(cube, i ? 1.45 : -1.45, .86, -1.2, .26, .08, .26, 0, d.closed ? [1, .15, .1] : [.1, 1, .2], .9, 0);
+      });
+      // figurer
+      if (enemies) enemies.forEach(e => {
+        if (blackout && e !== enemies[0]) return;
+        let p = enemyPos(e);
+        if (imminent(e)) p = { x: 0, y: 0, z: -4.7, r: 0 };
+        const eyeLvl = blackout ? .9 + .1 * Math.sin(time * 6) : (.55 + .45 * Math.random() * (e.state >= e.path.length - 3 ? 1 : .4));
+        animatronic(e.kind, p.x, p.y, p.z, p.r, time + e.kind * 2, 1, e.state, 0, eyeLvl);
+      });
+    }
+
+    /* ---------- brus / HUD ---------- */
+    const nctx = $('noise').getContext('2d'), nimg = nctx.createImageData(128, 72);
+    let nf = 0;
+    function drawNoise() {
+      if ((nf++ & 1) === 0) {
+        const d = nimg.data;
+        for (let i = 0; i < d.length; i += 4) { const v = Math.random() * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+        nctx.putImageData(nimg, 0, 0);
+      }
+      $('noise').style.opacity = glitch > 0 ? .75 : camUp ? .2 : mode === 'dying' ? .5 : .09;
+    }
+
+    /* ---------- indata ---------- */
+    function resize() { const dpr = Math.min(window.devicePixelRatio || 1, 1.5); canvas.width = Math.floor(innerWidth * dpr); canvas.height = Math.floor(innerHeight * dpr); }
+    addEventListener('resize', resize); resize();
+    addEventListener('pointermove', e => { mx = e.clientX / innerWidth; my = e.clientY / innerHeight; });
+    addEventListener('keyup', e => { if (e.code === 'KeyV') windHeld = false; });
+    addEventListener('keydown', e => {
+      if (e.code === 'KeyV') windHeld = true;
+      if (e.repeat) return;
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') toggleDoor(0);
+      else if (e.code === 'KeyD' || e.code === 'ArrowRight') toggleDoor(1);
+      else if (e.code === 'Space' || e.code === 'KeyC') { e.preventDefault(); if (mode === 'play') setCam(!camUp); }
+      else if (e.code === 'KeyQ' && camUp) pickCam((camIdx + CAMS.length - 1) % CAMS.length);
+      else if (e.code === 'KeyE' && camUp) pickCam((camIdx + 1) % CAMS.length);
+      else if (/^Digit[1-9]$/.test(e.code)) pickCam(+e.code.slice(5) - 1);
+    });
+    const bind = (id, fn) => $(id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); initAudio(); fn(); });
+    bind('bL', () => toggleDoor(0)); bind('bR', () => toggleDoor(1)); bind('bC', () => { if (mode === 'play') setCam(!camUp); });
+    bind('start', newGame); bind('retry', newGame); bind('again', newGame);
+    buildMap();
+    $('bW').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); initAudio(); windHeld = true; });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('bW').addEventListener(ev, () => { windHeld = false; }));
+
+    /* ---------- huvudloop ---------- */
+    enemies = mkEnemies();
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+      glitch = Math.max(0, glitch - dt);
+      // blicken (flyttar sig bara i kontoret)
+      const ty = -(mx - .5) * 2 * .85, tp = -(my - .5) * .22;
+      yaw += (ty - yaw) * Math.min(1, dt * 5); pitch += (tp - pitch) * Math.min(1, dt * 5);
+      update(dt);
+      render(t);
+      drawNoise();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+  </body>
+
+</html>

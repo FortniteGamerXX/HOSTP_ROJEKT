@@ -65,7 +65,12 @@ border: solid 5px var(--main-color-);
     background-color: rgb(172, 165, 165);
     grid-area: intnav;
     border: solid 5px var(--main-color-);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font
 }
+
 #idx_feet{
     grid-area: ft;
     background-color: var(--trird-color-);
