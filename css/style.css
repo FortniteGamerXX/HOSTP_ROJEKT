@@ -11,6 +11,9 @@
 body{
     background-color: var(--trird-color-);
     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    background: linear-gradient(rgb(0,0,0,0),rgb(0,0,0,0.5),url(https://m.media-amazon.com/images/I/61loIyWN-TL._AC_UF894,1000_QL80_.jpg));
+    background-size: cover;
+    background-position: center;
 }
 #sub-wrapper{
 color: black;
@@ -29,6 +32,7 @@ border: solid 5px var(--main-color-);
 .in_sub_wr{
     background-color: var(--second-color-);
     margin: 10px;
+    back
 }
 #wrapper{
     display: grid;
